@@ -1,5 +1,6 @@
 package com.sabekur2017.newsviewsv2.activity;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -17,6 +18,14 @@ import com.sabekur2017.newsviewsv2.R;
 import com.sabekur2017.newsviewsv2.models.NewsModel;
 import com.sabekur2017.newsviewsv2.service.ApiService;
 import com.sabekur2017.newsviewsv2.service.RestApiBuilder;
+import com.sabekur2017.newsviewsv2.utility.AppConstant;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -25,6 +34,7 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity  {
     private static final String TAG = MainActivity.class.getSimpleName();
     DrawerLayout drawerLayout;
+    public static String number = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,10 +69,12 @@ public class MainActivity extends AppCompatActivity  {
             }
         });
 
-     // api call
+     // api call news api
         ApiService apiService=new RestApiBuilder().getService();
-        String urlString="top-headlines?sources=google-news-uk&apiKey=29a31e34dd694e0ebd7e9cd4b3cdb99a";
-        Call<NewsModel> call=apiService.getNewsResponces(urlString);
+        //String urlString="top-headlines?sources=google-news-uk&apiKey=29a31e34dd694e0ebd7e9cd4b3cdb99a";
+        String urlString1=String.format("top-headlines?sources=google-news-uk&apiKey=%s",getString(R.string.news_api));
+       // String urlString2 = String.format("weather?lat=%f&lon=%f&units=%s&appid=%s", MainActivity.latitude,MainActivity.longitude,MainActivity.units,getString(R.string.weather_api));
+        Call<NewsModel> call=apiService.getNewsResponces(urlString1);
         call.enqueue(new Callback<NewsModel>() {
             @Override
             public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
@@ -78,6 +90,7 @@ public class MainActivity extends AppCompatActivity  {
 
             }
         });
+        new GetNumberData().execute();
     }
     @Override
     public void onBackPressed() {
@@ -86,6 +99,37 @@ public class MainActivity extends AppCompatActivity  {
         else
             super.onBackPressed();
     }
+    class GetNumberData extends AsyncTask<String, String, String> {
+
+        private String numberData = "";
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            try {
+                URL url = new URL(AppConstant.ANUMBER_API_DATE);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.connect();
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                numberData = reader.readLine();
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+           // numberInfoTextView.setText(result);
+            Log.d(TAG,"NUMBERDate info: "+numberData);
+        }
+    }
+
 
 
 
