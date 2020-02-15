@@ -1,16 +1,25 @@
 package com.sabekur2017.newsviewsv2.activity;
 
-import android.os.AsyncTask;
+import android.app.DatePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.widget.AutoCompleteTextView;
+import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -27,12 +36,6 @@ import com.sabekur2017.newsviewsv2.service.ApiService;
 import com.sabekur2017.newsviewsv2.service.RestApiBuilder;
 import com.sabekur2017.newsviewsv2.utility.AppConstant;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,11 +50,21 @@ public class MainActivity extends AppCompatActivity {
     RecyclerView recyclerView;
     SwipeRefreshLayout refreshLayout;
     private List<Article> articleList = new ArrayList<>();
+    private List<String> API_LIST = new ArrayList<>();
+    ApiService apiService;
+    private DatePicker picker;
+    private AutoCompleteTextView searchAuto;
+    private Button datePickerBtn;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        datePickerBtn=findViewById(R.id.search_go);
+
+       searchAuto=findViewById(R.id.search_button_auto);
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         drawerLayout = findViewById(R.id.drawer_layout);
@@ -80,44 +93,23 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // api call news api
-        ApiService apiService = new RestApiBuilder().getService();
-        String urlString1 = String.format("top-headlines?sources=google-news-uk&apiKey=%s", getString(R.string.news_api));
-        Call<NewsModel> call = apiService.getNewsResponces(urlString1);
-        call.enqueue(new Callback<NewsModel>() {
+        // api list
+        initApiList();
+        loadNews();
+        datePickerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
-                if (response.isSuccessful()) {
-                    NewsModel newsModel = response.body();
+            public void onClick(View v) {
+                String value = searchAuto.getText().toString().trim();
+                Log.d("dvalue",value);
+                if (!TextUtils.isEmpty(value)) {
+                    Intent intent = new Intent(MainActivity.this, NumberDateActivity.class);
+                    intent.putExtra("value", value);
+                    startActivity(intent);
 
-                    if (response.body().getArticles() != null) {
-                        articleList.addAll(response.body().getArticles());
-                        Log.d("article", "" + articleList.get(0).getUrlToImage());
-                        NewsAdapter adapter = new NewsAdapter(getApplicationContext(), articleList);
-                        // LinearLayoutManager linearLayoutManager=new LinearLayoutManager(getApplicationContext());
-                        RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getApplicationContext(), 2);
-                        recyclerView.setLayoutManager(layoutManager);
-                        adapter.notifyDataSetChanged();
-                        recyclerView.setAdapter(adapter);
-
-
-                    }
-                    //  int totalpage=newsModel.getTotalResults();
-                    // Log.d(TAG,totalpage+" get");
                 }
-                refreshLayout.setRefreshing(false);
-            }
-
-            @Override
-            public void onFailure(Call<NewsModel> call, Throwable t) {
-                Toast.makeText(getApplicationContext(), "Failed to response", Toast.LENGTH_SHORT).show();
-                Log.e("news_response", t.getMessage());
-                refreshLayout.setRefreshing(false);
-
             }
         });
-        new GetNumberData().execute();
-        new GetNumberWithDate().execute();
+
     }
 
     @Override
@@ -132,15 +124,39 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater menuInflater = getMenuInflater();
         menuInflater.inflate(R.menu.main_menu, menu);
+        MenuInflater searchInfalter=getMenuInflater();
+        searchInfalter.inflate(R.menu.search_menu,menu);
+        MenuItem menuItem = menu.findItem(R.id.search_id);
+        SearchView searchView = (SearchView) menuItem.getActionView();
+        searchView.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        searchView.setInputType(InputType.TYPE_CLASS_DATETIME);
+        searchView.setQueryHint("Search number");
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                number = query;
+                Intent intent=new Intent(getApplicationContext(),NumberActivity.class);
+                intent.putExtra("number",number);
+                startActivity(intent);
+                Log.d("search","searchview");
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.search_number:
-                Log.d("search", "Search selected");
-                Toast.makeText(this, "search selected", Toast.LENGTH_SHORT).show();
+            case R.id.date_number:
+                searchDate();
+                Log.d("date", "date selected");
+                Toast.makeText(this, "date selected", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.view_GridView:
                 Log.d("gridView", "view Grid");
@@ -154,64 +170,77 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    class GetNumberData extends AsyncTask<String, String, String> {
 
-        private String numberData = "";
 
-        @Override
-        protected String doInBackground(String... strings) {
 
-            try {
-                URL url = new URL(AppConstant.ANUMBER_API);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.connect();
-
-                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                numberData = reader.readLine();
-
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-
-            Log.d(TAG, "NUMBER info: " + numberData);
-        }
+    private void initApiList() {
+        API_LIST.add(AppConstant.API_1);
+        API_LIST.add(AppConstant.API_2);
+        API_LIST.add(AppConstant.API_3);
+        API_LIST.add(AppConstant.API_4);
+        API_LIST.add(AppConstant.API_5);
+        API_LIST.add(AppConstant.API_6);
+        API_LIST.add(AppConstant.API_7);
+        API_LIST.add(AppConstant.API_8);
+        API_LIST.add(AppConstant.API_9);
+        API_LIST.add(AppConstant.API_10);
     }
+    private void loadNews() {
 
-    class GetNumberWithDate extends AsyncTask<String, String, String> {
-        private String numberWithDate = "";
 
-        @Override
-        protected String doInBackground(String... strings) {
-            try {
-                URL url = new URL(AppConstant.ANUMBER_API_DATE);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.connect();
+        apiService =new RestApiBuilder().getService();
 
-                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                numberWithDate = reader.readLine();
+        for (int i = 0; i < 10; i++) {
+            load(API_LIST.get(i));
+        }
 
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
+    }
+    private void load(String url) {
+        apiService.getNewsResponces(url + AppConstant.API_KEY).enqueue(new Callback<NewsModel>() {
+            @Override
+            public void onResponse(Call<NewsModel> call, Response<NewsModel> response) {
+
+                if (response.isSuccessful()) {
+
+                    if (response.body().getArticles() != null) {
+                        articleList.addAll(response.body().getArticles());
+                        Log.d("article", "" + articleList.get(0).getUrlToImage());
+                        NewsAdapter adapter = new NewsAdapter(getApplicationContext(), articleList);
+                        // LinearLayoutManager linearLayoutManager=new LinearLayoutManager(getApplicationContext());
+                        RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getApplicationContext(), 2);
+                        recyclerView.setLayoutManager(layoutManager);
+                        adapter.notifyDataSetChanged();
+                        recyclerView.setAdapter(adapter);
+
+
+                    }
+                }
+
+                refreshLayout.setRefreshing(false);
             }
-            return null;
-        }
 
-        @Override
-        protected void onPostExecute(String s) {
-            // super.onPostExecute(s);
-            Log.d(TAG, "Date info: " + numberWithDate);
-        }
+            @Override
+            public void onFailure(Call<NewsModel> call, Throwable t) {
+                Toast.makeText(getApplicationContext(), "Failed to response", Toast.LENGTH_SHORT).show();
+                Log.e("news_response", t.getMessage());
+                refreshLayout.setRefreshing(false);
+
+
+            }
+        });
+    }
+    private void searchDate() {
+        picker = new DatePicker(this);
+        int curYear = picker.getYear();
+        int curMonth = picker.getMonth()+1;
+        int curDayOfMonth = picker.getDayOfMonth();
+        DatePickerDialog pickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                searchAuto.setText((month+1)+"/"+dayOfMonth); //dayOfMonth+"/"+(month+1)+"/"+year
+            }
+        }, curYear, curMonth, curDayOfMonth);
+        pickerDialog.show();
     }
 
 }

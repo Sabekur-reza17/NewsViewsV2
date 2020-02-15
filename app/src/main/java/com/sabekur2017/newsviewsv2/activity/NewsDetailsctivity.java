@@ -12,7 +12,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.sabekur2017.newsviewsv2.R;
-import com.sabekur2017.newsviewsv2.models.Article;
 
 public class NewsDetailsctivity extends AppCompatActivity {
 
@@ -27,7 +26,6 @@ public class NewsDetailsctivity extends AppCompatActivity {
     TextView detailsTextView;
 
     TextView viewMore;
-    private Article article;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +57,5 @@ public class NewsDetailsctivity extends AppCompatActivity {
             }
         });
     }
-    public void viewMore(View view) {
-        Toast.makeText(this, "viewmore"+article.getUrl(), Toast.LENGTH_SHORT).show();
-    }
+
 }
