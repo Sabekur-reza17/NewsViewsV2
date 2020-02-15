@@ -29,6 +29,12 @@ public class Article {
     @Expose
     private String content;
 
+
+
+
+
+
+
     public Source getSource() {
         return source;
     }
@@ -92,5 +98,7 @@ public class Article {
     public void setContent(String content) {
         this.content = content;
     }
+
+
 
 }

@@ -47,10 +47,10 @@ public class WelcomeActivity extends AppCompatActivity {
             getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         }
         setContentView(R.layout.activity_welcome);
-        viewPager = (ViewPager) findViewById(R.id.view_pager);
-        dotsLayout = (LinearLayout) findViewById(R.id.layoutDots);
-        btnSkip = (Button) findViewById(R.id.btn_skip);
-        btnNext = (Button) findViewById(R.id.btn_next);
+        viewPager =  findViewById(R.id.view_pager);
+        dotsLayout =  findViewById(R.id.layoutDots);
+        btnSkip =  findViewById(R.id.btn_skip);
+        btnNext =  findViewById(R.id.btn_next);
         // add few more layouts if you want
         layouts = new int[]{
                 R.layout.welcome_side1,

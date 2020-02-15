@@ -17,6 +17,7 @@ public class NewsModel {
     @Expose
     private List<Article> articles = null;
 
+
     public String getStatus() {
         return status;
     }
@@ -40,4 +41,6 @@ public class NewsModel {
     public void setArticles(List<Article> articles) {
         this.articles = articles;
     }
+
+
 }
