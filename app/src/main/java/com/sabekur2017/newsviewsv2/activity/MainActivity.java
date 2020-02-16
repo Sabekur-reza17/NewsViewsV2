@@ -186,8 +186,6 @@ public class MainActivity extends AppCompatActivity {
         API_LIST.add(AppConstant.API_10);
     }
     private void loadNews() {
-
-
         apiService =new RestApiBuilder().getService();
 
         for (int i = 0; i < 10; i++) {

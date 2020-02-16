@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -43,6 +42,7 @@ public class NewsDetailsctivity extends AppCompatActivity {
         final String time=intent.getExtras().getString("time");
         final String imgeUrl=intent.getExtras().getString("imageUrl");
         final String description=intent.getExtras().getString("description");
+        final String url=intent.getExtras().getString("url");
 
         titleTextView.setText(titile);
         authorTextView.setText(author);
@@ -53,7 +53,10 @@ public class NewsDetailsctivity extends AppCompatActivity {
         viewMore.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getApplicationContext(), "viewmore", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getApplicationContext(), "viewmore", Toast.LENGTH_SHORT).show();
+                Intent intentUrl=new Intent(NewsDetailsctivity.this,WebViewActivity.class);
+                intentUrl.putExtra("url",url);
+                startActivity(intentUrl);
             }
         });
     }

@@ -14,4 +14,9 @@
     <string name="open">Open</string>
     <string name="close">close</string>
     <string name="news_api">29a31e34dd694e0ebd7e9cd4b3cdb99a</string>
+    <string name="search">Search</string>
+    <string name="android_developer">Android Developer</string>
+    <string name="sabekur_reza">Sabekur Reza</string>
+    <string name="newsviews">“NewsViews”</string>
+    <string name="newsviews_v2">NewsViews V2</string>
 </resources>

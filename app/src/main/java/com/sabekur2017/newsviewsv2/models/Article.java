@@ -29,12 +29,6 @@ public class Article {
     @Expose
     private String content;
 
-
-
-
-
-
-
     public Source getSource() {
         return source;
     }
